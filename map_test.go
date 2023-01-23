@@ -223,7 +223,7 @@ func TestMapRangeNestedCall(t *testing.T) { // Issue 46399
 			// as we checked in above.
 			val := "sync.Map"
 			m.Store(42, val)
-			if v, loaded := m.LoadAndDelete(42); !loaded || !reflect.DeepEqual(v, val) {
+			if v, loaded := m.LoadAndDelete(42); !loaded || !reflect.DeepEqual(*v, val) {
 				t.Fatalf("Nested Range loads unexpected value, got %v, want %v", v, val)
 			}
 			return true

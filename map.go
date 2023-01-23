@@ -286,7 +286,7 @@ func (e *entry) tryLoadOrStore(i any) (actual any, loaded, ok bool) {
 
 // LoadAndDelete deletes the value for a key, returning the previous value if any.
 // The loaded result reports whether the key was present.
-func (m *Map[T]) LoadAndDelete(key any) (value any, loaded bool) {
+func (m *Map[T]) LoadAndDelete(key any) (value *T, loaded bool) {
 	read, _ := m.read.Load().(readOnly)
 	e, ok := read.m[key]
 	if !ok && read.amended {
@@ -304,8 +304,15 @@ func (m *Map[T]) LoadAndDelete(key any) (value any, loaded bool) {
 		m.mu.Unlock()
 	}
 	if ok {
-		return e.delete()
+		val, ok := e.delete()
+		if !ok {
+			return nil, false
+		}
+
+		t := val.(T)
+		return &t, true
 	}
+
 	return nil, false
 }
 
