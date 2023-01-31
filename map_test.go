@@ -206,7 +206,7 @@ func TestMapRangeNestedCall(t *testing.T) { // Issue 46399
 		m.Range(func(key any, value string) bool {
 			// We should be able to load the key offered in the Range callback,
 			// because there are no concurrent Delete involved in this tested map.
-			if v, ok := m.Load(key); !ok || !reflect.DeepEqual(*v, value) {
+			if v, ok := m.Load(key); !ok || !reflect.DeepEqual(v, value) {
 				t.Fatalf("Nested Range loads unexpected value, got %+v want %+v", v, value)
 			}
 
@@ -223,7 +223,7 @@ func TestMapRangeNestedCall(t *testing.T) { // Issue 46399
 			// as we checked in above.
 			val := "sync.Map"
 			m.Store(42, val)
-			if v, loaded := m.LoadAndDelete(42); !loaded || !reflect.DeepEqual(*v, val) {
+			if v, loaded := m.LoadAndDelete(42); !loaded || !reflect.DeepEqual(v, val) {
 				t.Fatalf("Nested Range loads unexpected value, got %v, want %v", v, val)
 			}
 			return true
@@ -253,5 +253,5 @@ func TestCustomMap(t *testing.T) {
 	m.Store("key1", "Hello")
 
 	result, exists := m.Load("key1")
-	fmt.Println(*result, exists)
+	fmt.Println(result, exists)
 }

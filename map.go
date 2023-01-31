@@ -101,7 +101,7 @@ func newEntry(i any) *entry {
 // Load returns the value stored in the map for a key, or nil if no
 // value is present.
 // The ok result indicates whether value was found in the map.
-func (m *Map[T]) Load(key any) (value *T, ok bool) {
+func (m *Map[T]) Load(key any) (value T, ok bool) {
 	read, _ := m.read.Load().(readOnly)
 	e, ok := read.m[key]
 	if !ok && read.amended {
@@ -121,17 +121,15 @@ func (m *Map[T]) Load(key any) (value *T, ok bool) {
 		m.mu.Unlock()
 	}
 	if !ok {
-		return nil, false
+		return *new(T), false
 	}
 
 	val, ok := e.load()
 	if !ok {
-		return nil, false
+		return *new(T), false
 	}
 
-	t := val.(T)
-
-	return &t, true
+	return val.(T), true
 }
 
 func (e *entry) load() (value any, ok bool) {
@@ -207,14 +205,13 @@ func (e *entry) storeLocked(i *any) {
 // LoadOrStore returns the existing value for the key if present.
 // Otherwise, it stores and returns the given value.
 // The loaded result is true if the value was loaded, false if stored.
-func (m *Map[T]) LoadOrStore(key any, value T) (actual *T, loaded bool) {
+func (m *Map[T]) LoadOrStore(key any, value T) (actual T, loaded bool) {
 	// Avoid locking if it's a clean hit.
 	read, _ := m.read.Load().(readOnly)
 	if e, ok := read.m[key]; ok {
 		actual, loaded, ok := e.tryLoadOrStore(value)
 		if ok {
-			a := actual.(T)
-			return &a, loaded
+			return actual.(T), loaded
 		}
 	}
 
@@ -239,15 +236,15 @@ func (m *Map[T]) LoadOrStore(key any, value T) (actual *T, loaded bool) {
 			m.read.Store(readOnly{m: read.m, amended: true})
 		}
 		m.dirty[key] = newEntry(value)
-		actual, loaded = &value, false
+		actual, loaded = value, false
 	}
 	m.mu.Unlock()
 
 	if actualAny == nil {
-		return nil, loaded
+		return *new(T), loaded
 	}
 
-	actual = actualAny.(*T)
+	actual = actualAny.(T)
 
 	return actual, loaded
 }
@@ -286,7 +283,7 @@ func (e *entry) tryLoadOrStore(i any) (actual any, loaded, ok bool) {
 
 // LoadAndDelete deletes the value for a key, returning the previous value if any.
 // The loaded result reports whether the key was present.
-func (m *Map[T]) LoadAndDelete(key any) (value *T, loaded bool) {
+func (m *Map[T]) LoadAndDelete(key any) (value T, loaded bool) {
 	read, _ := m.read.Load().(readOnly)
 	e, ok := read.m[key]
 	if !ok && read.amended {
@@ -306,14 +303,14 @@ func (m *Map[T]) LoadAndDelete(key any) (value *T, loaded bool) {
 	if ok {
 		val, ok := e.delete()
 		if !ok {
-			return nil, false
+			return *new(T), false
 		}
 
 		t := val.(T)
-		return &t, true
+		return t, true
 	}
 
-	return nil, false
+	return *new(T), false
 }
 
 // Delete deletes the value for a key.
